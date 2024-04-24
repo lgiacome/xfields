@@ -9,6 +9,7 @@ class CompressedProfile(xt.BeamElement):
         '_N_aux': xo.Int64,
         '_N_S': xo.Int64,
         'num_turns': xo.Int64,
+        '_N_1': xo.Int64,
     }
 
     _extra_c_sources = [xf.general._pkg_root.joinpath('headers/compressed_profile.h')]
@@ -21,8 +22,9 @@ class CompressedProfile(xt.BeamElement):
                 xo.Arg(xo.Int64, name='data_shape_1'),
                 xo.Arg(xo.Int64, name='data_shape_2'),
                 xo.Arg(xo.Float64, pointer=True, name='data'),
+                xo.Arg(xo.Float64, pointer=True, name='zeta_centers'),
                 xo.Arg(xo.Int64, pointer=True, name='i_bunch_particles'),
-                xo.Arg(xo.Int64, pointer=True, name='i_slice_particles'),
+                xo.Arg(xo.Int64, pointer=True, name='i_edge_particles'),
                 xo.Arg(xo.Float64, pointer=True, name='out'),
             ]),
         }

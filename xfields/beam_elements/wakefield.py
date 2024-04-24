@@ -172,10 +172,10 @@ class MultiWakefield:
         return xf.UniformBinSlicer._from_npbuffer(self._recv_buffer)
     
     def _slice_and_store(self,particles):
-        self.i_slice_particles = particles.particle_id * 0 + -999
+        self.i_edge_particles = particles.particle_id * 0 + -999
         self.i_bunch_particles = particles.particle_id * 0 + -9999
-        self.slicer.slice(particles, i_slice_particles=self.i_slice_particles,
-                        i_bunch_particles=self.i_bunch_particles)
+        self.slicer.slice(particles, i_edge_particles=self.i_edge_particles,
+                          i_bunch_particles=self.i_bunch_particles)
                         
     def track(self, particles):
         _slice_result = None
@@ -206,9 +206,9 @@ class MultiWakefield:
                 self.pipeline_manager.recieve_message(self._recv_buffer,self.name,partner_name,particles.name,internal_tag=1)
                 other_bunches_slicers.append(self._slice_set_from_buffer())
 
-        _slice_result = {'i_slice_particles': self.i_slice_particles,
-                        'i_bunch_particles': self.i_bunch_particles,
-                        'slicer': self.slicer}
+        _slice_result = {'i_edge_particles': self.i_edge_particles,
+                         'i_bunch_particles': self.i_bunch_particles,
+                         'slicer': self.slicer}
 
         for wf in self.wakefields:
             wf.track(particles, _slice_result=_slice_result,_other_bunches_slicers=other_bunches_slicers)
@@ -384,15 +384,16 @@ class Wakefield:
 
     def _slice_and_store(self,particles,_slice_result):
         if _slice_result is not None:
-            self.i_slice_particles = _slice_result['i_slice_particles']
+            self.i_edge_particles = _slice_result['i_edge_particles']
             self.i_bunch_particles = _slice_result['i_bunch_particles']
             self.slicer = _slice_result['slicer']
         else:
             # Measure slice moments and get slice indeces
-            self.i_slice_particles = particles.particle_id * 0 + -999
+            self.i_edge_particles = particles.particle_id * 0 + -999
             self.i_bunch_particles = particles.particle_id * 0 + -9999
-            self.slicer.slice(particles, i_slice_particles=self.i_slice_particles,
-                            i_bunch_particles=self.i_bunch_particles)
+            self.slicer.slice(particles,
+                              i_edge_particles=self.i_edge_particles,
+                              i_bunch_particles=self.i_bunch_particles)
         
     def _add_slicer_moments_to_moments_data(self,slicer):
         # Set slice moments for fast convolution
@@ -459,14 +460,17 @@ class Wakefield:
         interpolated_result = particles.zeta * 0
         assert self.moments_data.moments_names[-1] == 'result'
         md = self.moments_data
-        self.moments_data._interp_result(particles=particles,
-                    data_shape_0=md.data.shape[0],
-                    data_shape_1=md.data.shape[1],
-                    data_shape_2=md.data.shape[2],
-                    data=md.data,
-                    i_bunch_particles=self.i_bunch_particles,
-                    i_slice_particles=self.i_slice_particles,
-                    out=interpolated_result)
+        self.moments_data._interp_result(
+            particles=particles,
+            data_shape_0=md.data.shape[0],
+            data_shape_1=md.data.shape[1],
+            data_shape_2=md.data.shape[2],
+            data=md.data,
+            zeta_centers=self.slicer.zeta_centers,
+            i_bunch_particles=self.i_bunch_particles,
+            i_edge_particles=self.i_edge_particles,
+            out=interpolated_result)
+
         # interpolated result will be zero for lost particles (so nothing to do for them)
         scaling_constant = -particles.q0**2 * qe**2 / (particles.p0c * qe)
 

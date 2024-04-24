@@ -59,16 +59,16 @@ class UniformBinSlicer(xt.BeamElement):
                 c_name='UniformBinSlicer_slice',
                 args=[
                     xo.Arg(xo.Int64, name='use_bunch_index_array'),
-                    xo.Arg(xo.Int64, name='use_slice_index_array'),
-                    xo.Arg(xo.Int64, pointer=True, name='i_slice_particles'),
+                    xo.Arg(xo.Int64, name='use_edge_index_array'),
+                    xo.Arg(xo.Int64, pointer=True, name='i_edge_particles'),
                     xo.Arg(xo.Int64, pointer=True, name='i_bunch_particles')
                 ]),
             '_slice_kernel_x_only': xo.Kernel(
                 c_name='UniformBinSlicer_slice_x_only',
                 args=[
                     xo.Arg(xo.Int64, name='use_bunch_index_array'),
-                    xo.Arg(xo.Int64, name='use_slice_index_array'),
-                    xo.Arg(xo.Int64, pointer=True, name='i_slice_particles'),
+                    xo.Arg(xo.Int64, name='use_edge_index_array'),
+                    xo.Arg(xo.Int64, pointer=True, name='i_edge_particles'),
                     xo.Arg(xo.Int64, pointer=True, name='i_bunch_particles')
                 ]),
         }
@@ -139,7 +139,7 @@ class UniformBinSlicer(xt.BeamElement):
                           **allocated_sizes, **kwargs)
 
 
-    def slice(self, particles, i_slice_particles=None, i_bunch_particles=None):
+    def slice(self, particles, i_edge_particles=None, i_bunch_particles=None):
 
         self.clear()
 
@@ -148,17 +148,17 @@ class UniformBinSlicer(xt.BeamElement):
         else:
             use_bunch_index_array = 0
             i_bunch_particles = particles.particle_id[:1] # Dummy
-        if i_slice_particles is not None:
-            use_slice_index_array = 1
+        if i_edge_particles is not None:
+            use_edge_index_array = 1
         else:
-            use_slice_index_array = 0
-            i_slice_particles = particles.particle_id[:1] # Dummy
+            use_edge_index_array = 0
+            i_edge_particles = particles.particle_id[:1] # Dummy
 
         self._slice_kernel(particles=particles,
-                    use_bunch_index_array=use_bunch_index_array,
-                    use_slice_index_array=use_slice_index_array,
-                    i_slice_particles=i_slice_particles,
-                    i_bunch_particles=i_bunch_particles)
+                           use_bunch_index_array=use_bunch_index_array,
+                           use_edge_index_array=use_edge_index_array,
+                           i_edge_particles=i_edge_particles,
+                           i_bunch_particles=i_bunch_particles)
 
     def track(self, particles):
         self.slice(particles)

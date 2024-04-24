@@ -11,8 +11,8 @@
 void UniformBinSlicer_slice(UniformBinSlicerData el,
                 LocalParticle* part0,
                 int64_t const use_bunch_index_array,
-                int64_t const use_slice_index_array,
-                /*gpuglmem*/ int64_t* i_slice_part,
+                int64_t const use_edge_index_array,
+                /*gpuglmem*/ int64_t* i_edge_part,
                 /*gpuglmem*/ int64_t* i_slot_part){
 
     int64_t const num_slices = UniformBinSlicerData_get_num_slices(el);
@@ -99,17 +99,19 @@ void UniformBinSlicer_slice(UniformBinSlicerData el,
             if (use_bunch_index_array){
                 i_slot_part[ipart] = -1;
             }
-            if (use_slice_index_array){
-                i_slice_part[ipart] = -1;
+            if (use_edge_index_array){
+                i_edge_part[ipart] = -1;
             }
         } else {
             i_slot_part[ipart] = UniformBinSlicerData_get_filled_slots(el,UniformBinSlicerData_get_bunch_numbers(el,i_bunch_in_slicer));
             double z_min_edge_bunch = z_min_edge - i_slot_part[ipart] * bunch_spacing_zeta;
 
             int64_t i_slice = floor((zeta - z_min_edge_bunch) / dzeta);
+            int64_t i_edge = floor((zeta - z_min_edge_bunch + dzeta/2) / dzeta);
+
             if (i_slice >= 0 && i_slice < num_slices){
-                if (use_slice_index_array){
-                    i_slice_part[ipart] = i_slice;
+                if (use_edge_index_array){
+                    i_edge_part[ipart] = i_edge;
                 }
 
                 atomicAdd(&num_particles[i_slice + i_bunch_in_slicer * num_slices], weight);
@@ -167,8 +169,8 @@ void UniformBinSlicer_slice(UniformBinSlicerData el,
                     if (sum_zeta_delta)  atomicAdd(&sum_zeta_delta[i_slice + i_bunch_in_slicer * num_slices], weight * LocalParticle_get_zeta(part) * LocalParticle_get_delta(part));
                 }
             } else{
-                if (use_slice_index_array){
-                    i_slice_part[ipart] = -1;
+                if (use_edge_index_array){
+                    i_edge_part[ipart] = -1;
                 }
             }
         }
@@ -190,8 +192,8 @@ void UniformBinSlicer_track_local_particle(UniformBinSlicerData el,
 void UniformBinSlicer_slice_x_only(UniformBinSlicerData el,
                 LocalParticle* part0,
                 int64_t const use_bunch_index_array,
-                int64_t const use_slice_index_array,
-                /*gpuglmem*/ int64_t* i_slice_part,
+                int64_t const use_edge_index_array,
+                /*gpuglmem*/ int64_t* i_edge_part,
                 /*gpuglmem*/ int64_t* i_slot_part){
 
     int64_t const num_slices = UniformBinSlicerData_get_num_slices(el);
@@ -235,18 +237,19 @@ void UniformBinSlicer_slice_x_only(UniformBinSlicerData el,
             if (use_bunch_index_array){
                 i_slot_part[ipart] = -1;
             }
-            if (use_slice_index_array){
-                i_slice_part[ipart] = -1;
+            if (use_edge_index_array){
+                i_edge_part[ipart] = -1;
             }
         } else {
             i_slot_part[ipart] = UniformBinSlicerData_get_filled_slots(el,UniformBinSlicerData_get_bunch_numbers(el,i_bunch_in_slicer));
             double z_min_edge_bunch = z_min_edge - i_slot_part[ipart] * bunch_spacing_zeta;
 
             int64_t i_slice = floor((zeta - z_min_edge_bunch) / dzeta);
+            int64_t i_edge = floor((zeta - z_min_edge_bunch + dzeta/2) / dzeta);
             if (i_slice >= 0 && i_slice < num_slices){
 
-                if (use_slice_index_array){
-                    i_slice_part[ipart] = i_slice;
+                if (use_edge_index_array){
+                    i_edge_part[ipart] = i_edge;
                 }
 
                 atomicAdd(&num_particles[i_slice + i_bunch_in_slicer * num_slices], weight);
@@ -260,8 +263,8 @@ void UniformBinSlicer_slice_x_only(UniformBinSlicerData el,
                 // if (sum_delta) atomicAdd(&sum_delta[i_slice + i_bunch_in_slicer * num_slices], weight * LocalParticle_get_delta(part));
 
             } else {
-                if (use_slice_index_array){
-                    i_slice_part[ipart] = -1;
+                if (use_edge_index_array){
+                    i_edge_part[ipart] = -1;
                 }
             }
         }
